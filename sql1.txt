@@ -1,0 +1,37 @@
+DECLARE
+    CURSOR dpt_cur IS
+      SELECT d.department_id      id,
+             department_name      dptname,
+             city,
+             Nvl(first_name, '...') manager
+      FROM   departments d
+             left outer join employees e
+                          ON ( d.manager_id = e.employee_id )
+             join locations l USING(location_id)
+      ORDER  BY 2;
+    emp_name       employees.first_name%TYPE;
+    emp_max_salary employees.salary%TYPE;
+BEGIN
+    FOR dept_all IN dpt_cur LOOP
+        SELECT Max(salary)
+        INTO   emp_max_salary
+        FROM   employees
+        WHERE  department_id = dept_all.id;
+
+        IF emp_max_salary IS NULL THEN
+          emp_name := '...';
+        ELSE
+          SELECT first_name
+          INTO   emp_name
+          FROM   employees
+          WHERE  department_id = dept_all.id
+                 AND salary = emp_max_salary;
+        END IF;
+
+        dbms_output.Put_line(Rpad(dept_all.dptname, 20)
+                             || Rpad(dept_all.manager, 15)
+                             || Rpad(dept_all.city, 20)
+                             || Rpad(emp_name, 20));
+    END LOOP;
+END;
+/
